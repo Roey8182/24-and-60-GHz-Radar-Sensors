@@ -1,0 +1,85 @@
+#include "Arduino.h"
+#include <60ghzbreathheart.h>
+BreathHeart_60GHz radar = BreathHeart_60GHz(&Serial1);
+void setup() {
+  Serial.begin(115200);
+  Serial1.begin(115200);
+  pinMode(D0, OUTPUT);
+  pinMode(D1, OUTPUT);
+  while(!Serial);   
+  Serial.println("Ready");
+  radar.ModeSelect_fuc(1);  
+}
+void loop()
+{  
+  radar.Breath_Heart();           
+  if(radar.sensor_report != 0x00){
+    switch(radar.sensor_report){
+      case HEARTRATEVAL:
+        Serial.print("Sensor monitored the current heart rate value is: ");
+        Serial.println(radar.heart_rate, DEC);
+        Serial.println("----------------------------"); 
+        if (radar.heart_rate > 70) {
+          digitalWrite(D0, HIGH);
+          digitalWrite(D1, HIGH);
+        }
+        else if (radar.heart_rate <= 70 && radar.heart_rate > 50) {
+          digitalWrite(D0, HIGH);
+          digitalWrite(D1, LOW);
+        }
+        else {
+          digitalWrite(D0, LOW);
+          digitalWrite(D1, LOW);
+        }
+        break;
+      case HEARTRATEWAVE:  
+        Serial.print("The heart rate waveform(Sine wave) -- point 1: ");
+        Serial.print(radar.heart_point_1);
+        Serial.print(", point 2 : ");
+        Serial.print(radar.heart_point_2);
+        Serial.print(", point 3 : ");
+        Serial.print(radar.heart_point_3);
+        Serial.print(", point 4 : ");
+        Serial.print(radar.heart_point_4);
+        Serial.print(", point 5 : ");
+        Serial.println(radar.heart_point_5);
+        Serial.println("----------------------------");
+        break;
+      case BREATHNOR:
+        Serial.println("Sensor detects current breath rate is normal.");
+        Serial.println("----------------------------");
+        break;
+      case BREATHRAPID:
+        Serial.println("Sensor detects current breath rate is too fast.");
+        Serial.println("----------------------------");
+        break;
+      case BREATHSLOW:
+        Serial.println("Sensor detects current breath rate is too slow.");
+        Serial.println("----------------------------");
+        break;
+      case BREATHNONE:
+        Serial.println("There is no breathing information yet, please wait...");
+        Serial.println("----------------------------");
+        break;
+      case BREATHVAL:
+        Serial.print("Sensor monitored the current breath rate value is: ");
+        Serial.println(radar.breath_rate, DEC);
+        Serial.println("----------------------------");
+        break;
+      case BREATHWAVE:  
+        Serial.print("The breath rate waveform(Sine wave) -- point 1: ");
+        Serial.print(radar.breath_point_1);
+        Serial.print(", point 2 : ");
+        Serial.print(radar.breath_point_2);
+        Serial.print(", point 3 : ");
+        Serial.print(radar.breath_point_3);
+        Serial.print(", point 4 : ");
+        Serial.print(radar.breath_point_4);
+        Serial.print(", point 5 : ");
+        Serial.println(radar.breath_point_5);
+        Serial.println("----------------------------");
+        break;
+    }
+  }
+  delay(200);                       
+}
