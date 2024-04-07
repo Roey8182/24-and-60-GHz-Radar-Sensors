@@ -1,0 +1,69 @@
+#include <falldetectionradar.h>
+
+FallDetectionRadar radar;
+
+void setup()
+{
+  radar.SerialInit();
+  Serial.begin(9600);
+  delay(1000);
+  Serial.println("Readly");
+  pinMode(D0, OUTPUT);
+  pinMode(D1, OUTPUT);
+}
+
+void loop()
+{
+ radar.recvRadarBytes();                       //Receive radar data and start processing
+ if (radar.newData == true) {                  //The data is received and transferred to the new list dataMsg[]
+    byte dataMsg[radar.dataLen+1] = {0x00};
+    dataMsg[0] = 0x55;                         //Add the header frame as the first element of the array
+    
+    for (byte n = 0; n < radar.dataLen; n++)dataMsg[n+1] = radar.Msg[n];  //Frame-by-frame transfer
+    radar.newData = false;                     //A complete set of data frames is saved
+    
+    radar.ShowData(dataMsg);                 //Serial port prints a set of received data frames
+    radar.Bodysign_judgment(dataMsg, 1, 15); //Output of human movement using sign parameters
+    
+    /* if (dataMsg[7] == true && dataMsg[6] == false) {
+      digitalWrite(D0, HIGH);
+      digitalWrite(D1, HIGH);
+    }
+    else if (dataMsg[7] == false && dataMsg[6] == false) {
+      digitalWrite(D0, HIGH);
+      digitalWrite(D1, LOW);
+    }
+    else if (dataMsg[7] == false && dataMsg[6] == true) {
+      digitalWrite(D0, LOW);
+      digitalWrite(D1, LOW);
+    } */
+
+    typedef union
+  {
+    unsigned char Byte[4];
+    float Float;
+  } Float_Byte;
+    if(dataMsg[3] == ACTIVE_REPORT){
+     if(dataMsg[5] == BODYSIGN){
+       Float_Byte fb;
+       fb.Byte[0] = dataMsg[6];
+       fb.Byte[1] = dataMsg[7];
+       fb.Byte[2] = dataMsg[8];
+       fb.Byte[3] = dataMsg[9];
+       Serial.println(fb.Float);
+       if(fb.Float >= 1 && fb.Float < 15){
+         digitalWrite(D0, HIGH);
+         digitalWrite(D1, LOW);
+       }
+       else if(fb.Float < 1){
+         digitalWrite(D0, LOW);
+         digitalWrite(D1, LOW);
+       }
+       else if(fb.Float >= 15){
+         digitalWrite(D0, HIGH);
+         digitalWrite(D1, HIGH);
+       } 
+     }
+    }
+  }
+}
